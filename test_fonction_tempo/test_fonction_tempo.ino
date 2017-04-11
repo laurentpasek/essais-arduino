@@ -10,34 +10,30 @@ const int relais = 6;  //le relais est sur le pin 6
 
 // On crée un tableau contenant : le temps allumé, le temps éteint, le moment du dernier changement, l'état (allumé ou éteint)
 long circulation [] = {1000,3000,0,0};  
-//long circulationbis [] = {1000,3000,0,0};  
+
+int etatcirculation = 1;      //une variable pour stocker l'état dans lequel doit etre le relais
+
 
 void setup() {
 
   pinMode(relais, OUTPUT); //Définir la broche du relais comme sortie
   
     Serial.begin(9600); //initialiser la communication série
-  
+
 }
 
 void loop()
 {
-  
-  clignotement (circulation);
-  
-// affichages de déboggage
- Serial.print ("millis : ");   Serial.println (millis());
-// Serial.print ("etat : ");   Serial.println (circulation[3]);
-// Serial.print ("previousMillis : ");  Serial.println (circulation[2]);
- Serial.println();
-  
+  etatcirculation = clignotement (circulation);    //le retour de la fonction clignotement por circulation est stocké dans etat
+  digitalWrite (relais , etatcirculation);        //on met physiquement le relais dans la bonne position
 }
 
-long clignotement ( long tempo[4] )  
+
+
+long clignotement ( long delais[4] )  
 {
   
-  long delais[4];
-  
+ 
   if (delais[3] == 1)  //si le relais est éteint
   {
     if (millis () - delais[2] > delais[1])  //et que le délai d'extinction est dépassé
@@ -56,8 +52,8 @@ long clignotement ( long tempo[4] )
       }
     }
 
-    
-digitalWrite (relais, delais[3]);  //On met physiquement le relais à sa bonne position
+return delais[3];    //retourne la position dans laquelle doit etre le relais
+
 }
 
 
