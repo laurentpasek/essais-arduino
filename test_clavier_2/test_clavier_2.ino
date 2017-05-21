@@ -24,7 +24,7 @@ la variable databouton1 stocke les données relatives au bouton 1 avec :
 [2] : son dernier état
 [3] : le temps (millis) de la dernière mesure de son état
 */
-long databouton1 []={200,0,0,0};
+long databouton1 []={300,0,0,0};
 
 
 long time;  // une variable pour stocker la valeur de millis
@@ -84,7 +84,7 @@ if (databouton1 [1]==HIGH && databouton1 [2]==LOW)  //si bouton1 est appuyé et 
 }
   
   
-  if (databouton1 [1] == HIGH  &&  databouton1 [2]==HIGH   &&   time - databouton1 [3] >= 200)  //si le bouton était et est toujours appuyé et qu'il s'est écoulé plus de 200 millisecondes
+  if (databouton1 [1] == HIGH  &&  databouton1 [2]==HIGH   &&   time - databouton1 [3] >= databouton1 [0] )  //si le bouton était et est toujours appuyé et qu'il s'est écoulé plus de 200 millisecondes
   {
   
 
