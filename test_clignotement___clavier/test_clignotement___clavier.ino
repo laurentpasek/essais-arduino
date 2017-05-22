@@ -1,3 +1,30 @@
+// inclure les librairies nécessaires au fonctionnement
+#include <Wire.h>    //du 1-wire et de l'I2C
+#include <LiquidCrystal_I2C.h>    //de l'écran I2C
+#include <OneWire.h>    //du bus 1-wire
+
+#define ONE_WIRE_BUS 10    //le bus 1-wire est branché sur le pin 10 de l'arduino
+
+// Setup a oneWire instance to communicate with any OneWire devices 
+// (not just Maxim/Dallas temperature ICs)
+OneWire oneWire(ONE_WIRE_BUS);
+
+//Définition des pins de l'écran sur I2C
+#define I2C_ADDR 0x3F // <<—– Mettre votre adresse
+#define BACKLIGHT_PIN 3
+#define En_pin 2
+#define Rw_pin 1
+#define Rs_pin 0
+#define D4_pin 4
+#define D5_pin 5
+#define D6_pin 6
+#define D7_pin 7
+
+int n = 1; //nécessaire à lécran...
+
+LiquidCrystal_I2C lcd(I2C_ADDR,En_pin,Rw_pin,Rs_pin,D4_pin,D5_pin,D6_pin,D7_pin); //définition de l'écran
+
+
 
 
 // définition des pins sur lesquelles sont branchés les relais
@@ -58,8 +85,14 @@ void setup() {
     pinMode (bouton[i], INPUT);
   }
 
+//Paramétrage de l'écran
+lcd.begin (16, 2); // <<—– My LCD was 16×2
+ // Switch on the backlight
+ lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
+ lcd.setBacklight(HIGH);
 
-//  pinMode(inter[0], OUTPUT); //Définir la broche du relais comme sortie
+
+
   
     Serial.begin(9600); //initialiser la communication série
 
