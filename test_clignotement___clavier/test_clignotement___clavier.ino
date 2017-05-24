@@ -3,11 +3,18 @@
 #include <LiquidCrystal_I2C.h>    //de l'écran I2C
 #include <OneWire.h>    //du bus 1-wire
 
-#define ONE_WIRE_BUS 10    //le bus 1-wire est branché sur le pin 10 de l'arduino
+//définition du bus 1-wire---------------------------------------------------
 
-// Setup a oneWire instance to communicate with any OneWire devices 
-// (not just Maxim/Dallas temperature ICs)
-OneWire oneWire(ONE_WIRE_BUS);
+/* Broche du bus 1-Wire */
+const byte BROCHE_ONEWIRE = 10;
+/* Création de l'objet OneWire pour manipuler le bus 1-Wire */
+OneWire ds(BROCHE_ONEWIRE);
+
+//---------------------------------------------------------------------------
+
+
+
+//Définition de l'écran I2C--------------------------------------------------------------------------------------------
 
 //Définition des pins de l'écran sur I2C
 #define I2C_ADDR 0x3F // <<—– Mettre votre adresse
@@ -24,11 +31,11 @@ int n = 1; //nécessaire à lécran...
 
 LiquidCrystal_I2C lcd(I2C_ADDR,En_pin,Rw_pin,Rs_pin,D4_pin,D5_pin,D6_pin,D7_pin); //définition de l'écran
 
+//----------------------------------------------------------------------------------------------------------------------
 
 
 
-// définition des pins sur lesquelles sont branchés les relais
-/*
+/* Définition des pins sur lesquelles sont branchés les relais
 const int inter1 = 6;
 const int inter2 = 7;
 const int inter3 = 8;
@@ -36,10 +43,9 @@ const int inter4 = 9;
 */
 char inter[] = {6,7,8,9};
 
-//const int relaiscirculation = 6;  //le relais est sur le pin 6
 
-//définition des pins sur lesquels sont branchés les boutons
-/*
+
+/* Définition des pins sur lesquels sont branchés les boutons
 const int bouton1 = 2;
 const int bouton2 = 3;
 const int bouton3 = 4;
@@ -48,12 +54,41 @@ const int bouton4 = 5;
 char bouton[] = {2,3,4,5};
 
 
+
+//variables nécessaires au capteur de température d'eau (DS18B20)---------------------------------------------------------
+
+//déclarer l'adresse du capteur (temprature d'eau)
+byte addrtempeau [8] = {0x28, 0xFF, 0x60, 0x26, 0x92, 0x16, 0x05, 0x3E };
+
+byte datatempeau[9];    //le tableau pour stocker les données envoyées par le capteur
+float tempeau;    //un float pour stocker la température un fois convertie
+
+long delaitempeau = millis();    //une variable pour enregistrer le temps de départ de mesure de la temperature d'eau
+byte tempeauencours = 1;    //une variable pour savoir si une mesure de la temperature d'eau est en cours
+//------------------------------------------------------------------------------------------------------------------------
+
+
+// Variables nécessaires à la pompe de circulation-------------------------------------------------------------------------
+
 // On crée un tableau contenant : { le temps allumé, le temps éteint, le moment du dernier changement, l'état (allumé ou éteint) }
+// et qui sera utilisé par la fonction "clignotement"
 long circulation [] = {1000,3000,0,0};  
 
 int etatcirculation = 1;      //une variable pour stocker l'état dans lequel doit etre le relais
-int modecirculation = 0;  //variable pour stocker le mode de fonctionnement de la pompe de circulation (-1=off ; 0=auto ; 1=on )
+    int modecirculation [2]= {0,0};  //variable pour stocker le mode de fonctionnement de la pompe de circulation (-1=off ; 0=auto ; 1=on )en premier et le mode précédent ensuite
 
+//--------------------------------------------------------------------------------------------------------------------------
+
+//Variables nécessaires à l'écran------------------------------------------------------------------------------------------
+
+// On crée une variable qui sera utilisée par la fonction "clignotement" et qui premettra de faire clignotter l'écran
+long blinkecran [] = {1000, 1000, 0, 0};
+//soit une seconde allumé, une seconde éteint, millis() au dernier changement, l'état (allumé ou éteint)
+
+//-------------------------------------------------------------------------------------------------------------------------
+
+
+// Variables nécessaires au fonctionnement des boutons----------------------------------------------------------------------
 /*
 la variable databouton1 stocke les données relatives au bouton 1 avec :
 [0] : le pin sur lequel il est branché
@@ -66,80 +101,137 @@ long databouton1 []={(bouton[0]),300,0,0,0};
 long databouton2 []={(bouton[1]),300,0,0,0};
 long databouton3 []={(bouton[2]),300,0,0,0};
 long databouton4 []={(bouton[3]),300,0,0,0};
+//---------------------------------------------------------------------------------------------------------------------------
 
 
 
 void setup() {
   
   // Définition des pins D6 à D9 (les relais ) comme sortie et éteints au départ
-  
   for ( char i=0; i < sizeof(inter) ; i++)
   {
     pinMode (inter[i], OUTPUT);    //on définit tous les relais comme sorties
     digitalWrite (inter[i], HIGH);    //on définit tous les relais éteints au départ
   }
   
+//--------------------------------------------------------------------------------------------------------------------------  
+  
 // Définition des pins D2 à D5 (les bouton) comme entrées
   for (char i=0 ; i<sizeof (bouton); i++)
   {
     pinMode (bouton[i], INPUT);
   }
+  
+//--------------------------------------------------------------------------------------------------------------------------  
 
 //Paramétrage de l'écran
 lcd.begin (16, 2); // <<—– My LCD was 16×2
- // Switch on the backlight
- lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
- lcd.setBacklight(HIGH);
-
+// Switch on the backlight
+lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
+lcd.setBacklight(HIGH);
+//-------------------------------------------------------------------------------------------------------------------------
 
 
   
-    Serial.begin(9600); //initialiser la communication série
+        Serial.begin(9600); //initialiser la communication série ( pour déboggage)
+
 
 }
 
 void loop()
 {
   
-// première partie permettant de selectionner le mode de fonctionnement de la pompe en fonction
+// première partie permettant de selectionner le mode de fonctionnement de la pompe de circulation en fonction
 // des appuis sur le bouton 1
     if ( etatbouton(databouton1)== 1 )    //si le bouton est réellement appuyé
   {
   
-  switch (modecirculation)  //tester la valeur du mode de fonctionnement de la pompe
+  switch (modecirculation [0])  //tester la valeur du mode de fonctionnement de la pompe
   {
    case -1:  //si elle est éteinte
-   modecirculation=0;  //la passer en automatique
+   modecirculation [0]=0;  //la passer en automatique
+   lcd.clear();    //on en profite pour effacer l'écran qui devra maintenant afficher : circulation OFF
    break;
    
    case 0:  //si elle est en automatique 
-   modecirculation=1;  //la passer en allumé forçé
+   modecirculation [0]=1;  //la passer en allumé forçé
+   lcd.clear();    //on en profite pour effacer l'écran qui devra maintenant afficher les températures
    break;
    
    case 1:  //si elle est forçée allumée
-   modecirculation=-1;  //l'éteindre
+   modecirculation [0]=-1;  //l'éteindre
+   lcd.clear();    //on en profite pour effacer l'écran qui devra maintenant afficher : circulation ON
    break;
    }
   }
   //fin de la première partie
   
+  //----------------------------------------------------------------------------------------------------------------------------------------
+  
   //seconde partie : on allume ou éteint la pompe selon le mode de circulation choisi
-  switch (modecirculation)    //selon le mode de fonctionnement choisi
+  switch (modecirculation [0])    //selon le mode de fonctionnement choisi
   {
     case -1:    //si elle est forçée éteinte
     digitalWrite (inter[0], HIGH);    //on l'éteint
+    lcd.setCursor (0,0);    //on se met sur le premier caractère de la première ligne
+    lcd.print ("circulation OFF");    //on affiche le texte : circulation OFF
     break;
     
     case 0:    //si elle est en fonctionnement automatique
-    etatcirculation = clignotement (circulation);    //le retour de la fonction clignotement por circulation est stocké dans etatcirculation
-    digitalWrite (inter[0] , etatcirculation);        //on met physiquement le relais dans la bonne position
+    digitalWrite (inter[0] , clignotement (circulation));  //on met physiquement le relais dans la bonne position en fonction du retour de la fonction "clignotement" pour la variable "circulation"
     break;
     
     case 1:    //si elle est forçée allumée
     digitalWrite (inter[0], LOW);    //on l'allume
+    lcd.setCursor (0,1);    //on se met sur le premier caractère sur la seconde ligne
+    lcd.print ("circulation ON");    //on affiche le texte : circulation ON
     break;
   }
+  //fin de la seconde partie
+  
+  //-------------------------------------------------------------------------------------------------------------------------------------------
+  
+  //troisième partie : lecture de la sonde de température d'eau et affichage sur l'écran I2C---------------------------------------------------
+  
+  if (tempeauencours ==0)    //si il n'y a pas de mesure en cours
+  {
+  ds.reset();    //reset du bus 1-wire
+  ds.select (addrtempeau);    //selection de la sonde DS18B20 par son addresse
+  ds.write (0x44, 1);    //demande à la sonde une prise de mesure (conversion)
+  delaitempeau = millis();    //enregistre le temps de départ
+  tempeauencours = 1;    //on signale qu'il y a une mesure en cours
+  }
     
+  if (millis() - delaitempeau > 800 && tempeauencours == 1)    //si une mesure est en cours et ce depuis plus de 800 millisecondes (temps nécessaire au D18B20)
+  {
+  ds.reset();    //reset du bus 1-wire
+  ds.select (addrtempeau);    //selection de la sonde DS18B20 par son addresse
+  ds.write (0xBE);    //demande à la sonde la lecture du scratchpad
+   
+  //on stocke chacun des octets dans le tableau data
+  for (byte i=0; i<9; i++)
+  {
+    datatempeau[i] = ds.read();
+  }   
+  //on reprend les deux premiers octets et on les convertit en une température en degrés celsius
+  tempeau = ((datatempeau[1] << 8 | datatempeau[0]) * 0.0625);
+  tempeauencours = 0;
+  }  //fin de la lecture de la temperature de l'eau
+  
+ 
+  //affichage de la température d'eau sur l'écran
+  if (modecirculation [0] ==0)    //si la pompe est en mode automatique
+  {
+ lcd.home ();    //on se met sur le premier caractère de la première ligne
+ lcd.print ("temperature");    //on affiche le texte : temperature
+ lcd.setCursor (2,1);    //on se met au troisième caractère sur la seconde ligne
+ lcd.print (tempeau);    //on affiche la température
+ lcd.print ((char)223); //le signe °
+ //lcd.print ((char)99); // le symbole c sur la table de caractères
+ lcd.print("c");
+  }
+  
+//fin de la troisième partie-----------------------------------------------------------------------------------------------------------------------------  
     
     
     
@@ -147,8 +239,13 @@ void loop()
     
 }
 
+//FIN DE VOID LOOP-----------------------------------------------------------------------------------------------------------------------------------
 
 
+
+
+//---------------------------------------------------------------------------------------------------------------------------------------
+//----------------------------------------------------------------------------------------------------------------------------------------------
 
 
 // début de la fonction de clignotement qui permet d'allumer et d'éteindre la pompe à intervalles réguliers
