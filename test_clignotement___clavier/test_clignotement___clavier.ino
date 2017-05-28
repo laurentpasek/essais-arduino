@@ -74,16 +74,26 @@ byte tempeauencours = 1;    //une variable pour savoir si une mesure de la tempe
 // et qui sera utilisé par la fonction "clignotement"
 long circulation [] = {1000,3000,0,0};  
 
-int etatcirculation = 1;      //une variable pour stocker l'état dans lequel doit etre le relais
+//      int etatcirculation = 1;      //une variable pour stocker l'état dans lequel doit etre le relais
     int modecirculation [2]= {0,0};  //variable pour stocker le mode de fonctionnement de la pompe de circulation (-1=off ; 0=auto ; 1=on )en premier et le mode précédent ensuite
 
 //--------------------------------------------------------------------------------------------------------------------------
 
+//variables nécessaires à la pompe à air----------------------------------------------------------------------------------------
+
+// On crée un tableau contenant : { le temps allumé, le temps éteint, le moment du dernier changement, l'état (allumé ou éteint) }
+// et qui sera utilisé par la fonction "clignotement"
+long air [] = {1000,3000,0,0};  
+
+int modeair [2]= {0,0};  //variable pour stocker le mode de fonctionnement de la pompe à air (-1=off ; 0=auto ; 1=on )en premier et le mode précédent ensuite
+
+
 //Variables nécessaires à l'écran------------------------------------------------------------------------------------------
 
 // On crée une variable qui sera utilisée par la fonction "clignotement" et qui premettra de faire clignotter l'écran
-long blinkecran [] = {1000, 1000, 0, 0};
-//soit une seconde allumé, une seconde éteint, millis() au dernier changement, l'état (allumé ou éteint)
+long blinkecran [] = {1000, 1000, 0, 0};    //soit une seconde allumé, une seconde éteint, millis() au dernier changement, l'état (allumé ou éteint)
+//On crée une variable qui contient {le temps d'allumage du rétroéclairage, le temps (millis) depuis l'appui du bouton, et 0 ou 1 si le rétroéclairage est allumé ou éteint}
+long retroeclairage []= {4000, 0, 0};
 
 //-------------------------------------------------------------------------------------------------------------------------
 
@@ -143,7 +153,7 @@ void loop()
   
 // première partie permettant de selectionner le mode de fonctionnement de la pompe de circulation en fonction
 // des appuis sur le bouton 1
-    if ( etatbouton(databouton1)== 1 )    //si le bouton est réellement appuyé
+    if ( etatbouton(databouton1)== 1 )    //si le bouton 1 est réellement appuyé
   {
   
   switch (modecirculation [0])  //tester la valeur du mode de fonctionnement de la pompe
@@ -168,30 +178,113 @@ void loop()
   
   //----------------------------------------------------------------------------------------------------------------------------------------
   
-  //seconde partie : on allume ou éteint la pompe selon le mode de circulation choisi
+  //seconde partie : on allume ou éteint la pompe de circulation selon le mode de circulation choisi
   switch (modecirculation [0])    //selon le mode de fonctionnement choisi
   {
     case -1:    //si elle est forçée éteinte
     digitalWrite (inter[0], HIGH);    //on l'éteint
     lcd.setCursor (0,0);    //on se met sur le premier caractère de la première ligne
     lcd.print ("circulation OFF");    //on affiche le texte : circulation OFF
+    lcd.setBacklight (clignotement(blinkecran));    //on fait clignoter le rétroéclairage de l'écran
     break;
     
     case 0:    //si elle est en fonctionnement automatique
     digitalWrite (inter[0] , clignotement (circulation));  //on met physiquement le relais dans la bonne position en fonction du retour de la fonction "clignotement" pour la variable "circulation"
+    if (modeair[0] ==0 && retroeclairage[2] ==0 )    //si la pompe à air est aussi en mode automatique et que l'écren ne doit pas etre allumé
+    {
+    lcd.setBacklight(LOW);    //on allume le rétroéclairage de l'écran
+    }
     break;
     
     case 1:    //si elle est forçée allumée
     digitalWrite (inter[0], LOW);    //on l'allume
-    lcd.setCursor (0,1);    //on se met sur le premier caractère sur la seconde ligne
+    lcd.setCursor (0,0);    //on se met sur le premier caractère sur la première ligne
     lcd.print ("circulation ON");    //on affiche le texte : circulation ON
+    lcd.setBacklight (clignotement(blinkecran));    //on fait clignoter le rétroéclairage de l'écran
     break;
   }
   //fin de la seconde partie
   
   //-------------------------------------------------------------------------------------------------------------------------------------------
   
-  //troisième partie : lecture de la sonde de température d'eau et affichage sur l'écran I2C---------------------------------------------------
+  //troisième partie : permettant de selectionner le mode de fonctionnement de la pompe à air en ----------------------------------------------
+  // fonction de appuis sur le bouton 2
+  
+      if ( etatbouton(databouton2)== 1 )    //si le bouton 2 est réellement appuyé
+  {
+  
+  switch (modeair [0])  //tester la valeur du mode de fonctionnement de la pompe à air
+  {
+   case -1:  //si elle est éteinte
+   modeair [0]=0;  //la passer en automatique
+   lcd.clear();    //on en profite pour effacer l'écran qui devra maintenant afficher : air OFF
+   break;
+   
+   case 0:  //si elle est en automatique 
+   modeair [0]=1;  //la passer en allumé forçé
+   lcd.clear();    //on en profite pour effacer l'écran qui devra maintenant afficher les températures
+   break;
+   
+   case 1:  //si elle est forçée allumée
+   modeair [0]=-1;  //l'éteindre
+   lcd.clear();    //on en profite pour effacer l'écran qui devra maintenant afficher : air ON
+   break;
+   }
+  }
+
+  
+  
+  // fin de la troisième partie--------------------------------------------------------------------------------------------------------------
+  
+  // quatrième partie : on allume ou on éteint la pompe à air selon le mode choisi-------------------------------------------------------------
+  
+  switch (modeair [0])    //selon le mode de fonctionnement choisi
+  {
+    case -1:    //si elle est forçée éteinte
+    digitalWrite (inter[1], HIGH);    //on l'éteint
+    lcd.setCursor (0,1);    //on se met sur le premier caractère de la seconde ligne
+    lcd.print ("air OFF");    //on affiche le texte : air OFF
+    lcd.setBacklight (clignotement(blinkecran));    //on fait clignoter le rétroéclairage de l'écran
+    break;
+    
+    case 0:    //si elle est en fonctionnement automatique
+    digitalWrite (inter[1] , clignotement (air));  //on met physiquement le relais dans la bonne position en fonction du retour de la fonction "clignotement" pour la variable "air"
+    if (modecirculation[0] ==0 && retroeclairage[2] == 0 )    //si la pompe de circulation est aussi en automatique et que l'écran ne doit pas etre allumé
+    {
+    lcd.setBacklight(LOW);    //on eteint le rétroéclairage de l'écran
+    }
+    break;
+    
+    case 1:    //si elle est forçée allumée
+    digitalWrite (inter[1], LOW);    //on l'allume
+    lcd.setCursor (0,1);    //on se met sur le premier caractère sur la seconde ligne
+    lcd.print ("air ON");    //on affiche le texte : air ON
+    lcd.setBacklight (clignotement(blinkecran));    //on fait clignoter le rétroéclairage de l'écran
+    break;
+  }
+  
+  // fin de la quatrième partie---------------------------------------------------------------------------------------------------------------
+  
+  // cinquième partie : gestion du rétroéclairage de l'écran juste le temps d'une lecture-----------------------------------------------------
+  
+  if (etatbouton(databouton4) == 1 )    //si le bouton 4 est réellement appuyé
+  {
+  retroeclairage[2] = 1;    //on déclare que le rétroéclairage doit etre allumé
+  retroeclairage[1] = millis();    //on enregistre le millis au moment de l'appui sur le bouton
+  lcd.setBacklight (HIGH);    //on allume le rétroéclairage
+  }
+  
+  if ( millis() - retroeclairage[1] > retroeclairage[0] )    //si le temps de rétroéclairage est écoulé
+  {
+   retroeclairage[2] = 0;    //on déclare que le rétroéclairage doit etre éteint. (il sera éteint physiquement dans les boucles sur le fonctionnement des pompes).
+   
+  }
+  
+  // fin de la cinquième partie--------------------------------------------------------------------------------------------------------------
+  
+  
+  
+  //sixième partie : lecture de la sonde de température d'eau et affichage sur l'écran I2C---------------------------------------------------
   
   if (tempeauencours ==0)    //si il n'y a pas de mesure en cours
   {
@@ -220,7 +313,7 @@ void loop()
   
  
   //affichage de la température d'eau sur l'écran
-  if (modecirculation [0] ==0)    //si la pompe est en mode automatique
+  if (modecirculation [0] ==0 && modeair [0] ==0 )    //si la pompe de circulation et la pompe à air sont en mode automatique
   {
  lcd.home ();    //on se met sur le premier caractère de la première ligne
  lcd.print ("temperature");    //on affiche le texte : temperature
@@ -231,7 +324,7 @@ void loop()
  lcd.print("c");
   }
   
-//fin de la troisième partie-----------------------------------------------------------------------------------------------------------------------------  
+//fin de la sixième partie-----------------------------------------------------------------------------------------------------------------------------  
     
     
     
