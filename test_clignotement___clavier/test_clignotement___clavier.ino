@@ -2,6 +2,9 @@
 #include <Wire.h>    //du 1-wire et de l'I2C
 #include <LiquidCrystal_I2C.h>    //de l'écran I2C
 #include <OneWire.h>    //du bus 1-wire
+#include "DHT.h"   // Librairie des capteurs DHT
+#include <Adafruit_Sensor.h>  // la librairie adafruit sensor est nécessaire à la librairie DHT.h
+
 
 //définition du bus 1-wire---------------------------------------------------
 
@@ -11,6 +14,17 @@ const byte BROCHE_ONEWIRE = 10;
 OneWire ds(BROCHE_ONEWIRE);
 
 //---------------------------------------------------------------------------
+
+// définition du capteur DHT22-------------------------------------------------------------------------------
+
+#define DHTPIN 11    // Changer le pin sur lequel est branché le DHT
+#define DHTTYPE DHT22      // Il s'agit d'un capteur DHT 22  (AM2302) et non DHT11 ou DHT21
+// Initialisation du capteur pour un Arduino à 16mhz par défaut
+// Il faudra modifier le 3ème paramètres pour une autre carte (sinon le capteur renvoie 0). Quelques valeurs : 8mhz => 3, 16mhz => 6, 84mhz => 84
+DHT dht(DHTPIN, DHTTYPE); 
+
+//-------------------------------------------------------------------------------------------------------------------
+
 
 
 
@@ -65,6 +79,16 @@ float tempeau;    //un float pour stocker la température un fois convertie
 
 long delaitempeau = millis();    //une variable pour enregistrer le temps de départ de mesure de la temperature d'eau
 byte tempeauencours = 1;    //une variable pour savoir si une mesure de la temperature d'eau est en cours
+//------------------------------------------------------------------------------------------------------------------------
+
+
+// Variables nécessaites au capteur DHT22---------------------------------------------------------------------------------
+
+float tempair;    //un float pour stocker la température de l'air
+float humidite;    //un float pour stocker le taux d'humidité
+
+
+
 //------------------------------------------------------------------------------------------------------------------------
 
 
@@ -140,6 +164,10 @@ lcd.begin (16, 2); // <<—– My LCD was 16×2
 lcd.setBacklightPin(BACKLIGHT_PIN,POSITIVE);
 lcd.setBacklight(HIGH);
 //-------------------------------------------------------------------------------------------------------------------------
+
+dht.begin();    // initialisation du capteur DHT22
+
+//----------------------------------------------------------------------------------------------------------------------
 
 
   
@@ -284,7 +312,7 @@ void loop()
   
   
   
-  //sixième partie : lecture de la sonde de température d'eau et affichage sur l'écran I2C---------------------------------------------------
+  //sixième partie : lecture de la sonde de température d'eau---------------------------------------------------
   
   if (tempeauencours ==0)    //si il n'y a pas de mesure en cours
   {
@@ -311,22 +339,43 @@ void loop()
   tempeauencours = 0;
   }  //fin de la lecture de la temperature de l'eau
   
- 
+   
+//fin de la sixième partie-----------------------------------------------------------------------------------------------------------------------------  
+
+// septième partie : lecture de la temperature de l'air et du taux d'humidité-----------------------------------------------------------------
+
+tempair = dht.readTemperature();    //lecture de la temperature sur la DHT22 en degrés celcius
+humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22
+
+// fin de la septième partie------------------------------------------------------------------------------------------------------------
+
+
+
   //affichage de la température d'eau sur l'écran
   if (modecirculation [0] ==0 && modeair [0] ==0 )    //si la pompe de circulation et la pompe à air sont en mode automatique
   {
+     lcd.home ();    //on se met sur le premier caractère de la première ligne
+     lcd.print (tempeau, 1);    //on affiche la température de l'eau avec un seul chiffre derrière la virgule
+     lcd.print ((char)223); //le signe °
+     lcd.print (" ");    //on laisse un espace
+     lcd.print (tempair, 1);    //on affiche la température de l'air avec un seul chiffre derrière la virgule
+     lcd.print ((char)223); //le signe °
+     lcd.print (" ");    //on laisse un espace
+     lcd.print (humidite, 1);    //on affiche la l'humidité de l'air avec un seul chiffre derrière la virgule
+     //lcd.print ((char)37); //le signe %
+     
+    
+    
+    /*
  lcd.home ();    //on se met sur le premier caractère de la première ligne
  lcd.print ("temperature");    //on affiche le texte : temperature
  lcd.setCursor (2,1);    //on se met au troisième caractère sur la seconde ligne
- lcd.print (tempeau);    //on affiche la température
+ lcd.print (tempeau, 1);    //on affiche la température avec un seul chiffre derrière la virgule
  lcd.print ((char)223); //le signe °
  //lcd.print ((char)99); // le symbole c sur la table de caractères
  lcd.print("c");
+ */
   }
-  
-//fin de la sixième partie-----------------------------------------------------------------------------------------------------------------------------  
-    
-    
     
     
     
