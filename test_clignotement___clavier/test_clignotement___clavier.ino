@@ -150,10 +150,11 @@ void setup() {
   
 //--------------------------------------------------------------------------------------------------------------------------  
   
-// Définition des pins D2 à D5 (les bouton) comme entrées
+// Définition des pins D2 à D5 (les bouton) comme entrées et activation des résistances de pull-up
   for (char i=0 ; i<sizeof (bouton); i++)
   {
     pinMode (bouton[i], INPUT);
+//    digitalWrite (bouton [i], HIGH);  // mettre une broche en entrée à l'état haut permet d'activer les résistances de pull-up
   }
   
 //--------------------------------------------------------------------------------------------------------------------------  
