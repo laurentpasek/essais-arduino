@@ -423,26 +423,27 @@ return delais[3];    //retourne la position dans laquelle doit etre le relais
 
 
 //début de la fonction permettant de lire l'état dun bouton en évitant le phénomène de rebond
+
 long etatbouton (long databouton [])
 { 
    
 
 databouton [2] = digitalRead(databouton [0]);  //lire l'état du bouton
 
-if (databouton [2]==HIGH && databouton [3]==LOW)  //si bouton1 est appuyé et qu'il n'y était pas avant
+if (databouton [2]==LOW && databouton [3]==HIGH)  //si bouton1 est appuyé et qu'il n'y était pas avant
 {
-  databouton [3]=HIGH;  //enregistrer son dernier état à appuyé
+  databouton [3]=LOW;  //enregistrer son dernier état à appuyé
 
     databouton [4] = millis();  //et enregistrer le temps (millis) de ce test
 }
   
   
-  if (databouton [2] == HIGH  &&  databouton [3]==HIGH   &&   millis() - databouton [4] >= databouton [1] )  //si le bouton était et est toujours appuyé et qu'il s'est écoulé plus de 200 millisecondes
+  if (databouton [2] == LOW  &&  databouton [3]==LOW   &&   millis() - databouton [4] >= databouton [1] )  //si le bouton était et est toujours appuyé et qu'il s'est écoulé plus de 200 millisecondes
   {
   
 
    
-   databouton [3]=LOW;  //remettre le dernier état du bouton à relaché
+   databouton [3]=HIGH;  //remettre le dernier état du bouton à relaché
    return 1;    //on cosidère que le bouton est réellement appuyé donc on envoie 1
   }
   
@@ -451,8 +452,7 @@ if (databouton [2]==HIGH && databouton [3]==LOW)  //si bouton1 est appuyé et qu
   return 0;    //on considère que le bouton n'est pas réellement appuyé donc on envoie 0
   }
 }
+
 //Fin de la fonction de lecture des boutons
-
-
 
 
