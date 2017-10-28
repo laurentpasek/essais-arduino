@@ -315,6 +315,9 @@ void loop()
   
   //sixième partie : lecture de la sonde de température d'eau---------------------------------------------------
   
+  LectureTempEau ();
+  
+  /*
   if (tempeauencours ==0)    //si il n'y a pas de mesure en cours
   {
   ds.reset();    //reset du bus 1-wire
@@ -339,6 +342,7 @@ void loop()
   tempeau = ((datatempeau[1] << 8 | datatempeau[0]) * 0.0625);
   tempeauencours = 0;
   }  //fin de la lecture de la temperature de l'eau
+  */
   
    
 //fin de la sixième partie-----------------------------------------------------------------------------------------------------------------------------  
@@ -454,5 +458,37 @@ if (databouton [2]==LOW && databouton [3]==HIGH)  //si bouton1 est appuyé et qu
 }
 
 //Fin de la fonction de lecture des boutons
+
+
+
+// Début de la fonction de lecture de la température de l'eau -----------------------------------------------------------------------------------------------
+
+void LectureTempEau ()
+{
+    if (tempeauencours ==0)    //si il n'y a pas de mesure en cours
+  {
+  ds.reset();    //reset du bus 1-wire
+  ds.select (addrtempeau);    //selection de la sonde DS18B20 par son addresse
+  ds.write (0x44, 1);    //demande à la sonde une prise de mesure (conversion)
+  delaitempeau = millis();    //enregistre le temps de départ
+  tempeauencours = 1;    //on signale qu'il y a une mesure en cours
+  }
+    
+  if (millis() - delaitempeau > 800 && tempeauencours == 1)    //si une mesure est en cours et ce depuis plus de 800 millisecondes (temps nécessaire au D18B20)
+  {
+  ds.reset();    //reset du bus 1-wire
+  ds.select (addrtempeau);    //selection de la sonde DS18B20 par son addresse
+  ds.write (0xBE);    //demande à la sonde la lecture du scratchpad
+   
+  //on stocke chacun des octets dans le tableau data
+  for (byte i=0; i<9; i++)
+  {
+    datatempeau[i] = ds.read();
+  }   
+  //on reprend les deux premiers octets et on les convertit en une température en degrés celsius
+  tempeau = ((datatempeau[1] << 8 | datatempeau[0]) * 0.0625);
+  tempeauencours = 0;
+  }  //fin de la lecture de la temperature de l'eau
+}
 
 
