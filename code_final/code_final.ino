@@ -359,6 +359,10 @@ humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22
   //affichage de la température d'eau sur l'écran
   if (modecirculation [0] ==0 && modeair [0] ==0 )    //si la pompe de circulation et la pompe à air sont en mode automatique
   {
+    AffichageEcran ();
+    
+    
+    /*
      lcd.home ();    //on se met sur le premier caractère de la première ligne
      lcd.print (tempeau, 1);    //on affiche la température de l'eau avec un seul chiffre derrière la virgule
      lcd.print ((char)223); //le signe °
@@ -368,6 +372,7 @@ humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22
      lcd.print (" ");    //on laisse un espace
      lcd.print (humidite, 1);    //on affiche la l'humidité de l'air avec un seul chiffre derrière la virgule
      //lcd.print ((char)37); //le signe %
+     */
      
     
     
@@ -490,5 +495,27 @@ void LectureTempEau ()
   tempeauencours = 0;
   }  //fin de la lecture de la temperature de l'eau
 }
+
+// Fin de la lecture de la Température de l'eau -------------------------------------------------------------------------------------------------------
+
+
+// Début de la fonction permettant d'afficher les données sur l'écran ---------------------------------------------------------------------------------
+
+void AffichageEcran ()
+{
+     lcd.home ();    //on se met sur le premier caractère de la première ligne
+     lcd.print (tempeau, 1);    //on affiche la température de l'eau avec un seul chiffre derrière la virgule
+     lcd.print ((char)223); //le signe °
+     lcd.print (" ");    //on laisse un espace
+     lcd.print (tempair, 1);    //on affiche la température de l'air avec un seul chiffre derrière la virgule
+     lcd.print ((char)223); //le signe °
+     lcd.print (" ");    //on laisse un espace
+     lcd.print (humidite, 1);    //on affiche la l'humidité de l'air avec un seul chiffre derrière la virgule
+     //lcd.print ((char)37); //le signe %
+}
+
+// Fin de la fonction d'affichage des valeurs sur l'écran---------------------------------------------------------------------------------------------------
+
+
 
 
