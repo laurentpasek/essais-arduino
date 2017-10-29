@@ -349,8 +349,14 @@ void loop()
 
 // septième partie : lecture de la temperature de l'air et du taux d'humidité-----------------------------------------------------------------
 
+LectureTempAir ();
+LectureHumidite ();
+
+
+/*
 tempair = dht.readTemperature();    //lecture de la temperature sur la DHT22 en degrés celcius
 humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22
+*/
 
 // fin de la septième partie------------------------------------------------------------------------------------------------------------
 
@@ -517,5 +523,20 @@ void AffichageEcran ()
 // Fin de la fonction d'affichage des valeurs sur l'écran---------------------------------------------------------------------------------------------------
 
 
+// Dédut de la fonction de la lecture de la température de l'air.---------------------------------------------------------------------------------------------
 
+void LectureTempAir ()
+{
+  tempair = dht.readTemperature();    //lecture de la temperature sur la DHT22 en degrés celcius et stockage dans tempair
+}
+
+// fin de la fonction de lecture de la température de l'air----------------------------------------------------------------------------------------------
+
+
+// Début de la fonction de lecture de l'hygrométrie------------------------------------------------------------------------------------------------------------
+
+void LectureHumidite ()
+{
+  humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22 et stockage dans humidite
+}
 
