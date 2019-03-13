@@ -23,8 +23,11 @@ OneWire ds(BROCHE_ONEWIRE);
 // Il faudra modifier le 3ème paramètres pour une autre carte (sinon le capteur renvoie 0). Quelques valeurs : 8mhz => 3, 16mhz => 6, 84mhz => 84
 DHT dht(DHTPIN, DHTTYPE); 
 
-//-------------------------------------------------------------------------------------------------------------------
+// Variables nécessaites au capteur DHT22---------------------------------------------------------------------------------
 
+float tempair;    //un float pour stocker la température de l'air
+float humidite;    //un float pour stocker le taux d'humidité
+//-------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -80,17 +83,6 @@ float tempeau;    //un float pour stocker la température un fois convertie
 long delaitempeau = millis();    //une variable pour enregistrer le temps de départ de mesure de la temperature d'eau
 byte tempeauencours = 1;    //une variable pour savoir si une mesure de la temperature d'eau est en cours
 //------------------------------------------------------------------------------------------------------------------------
-
-
-// Variables nécessaites au capteur DHT22---------------------------------------------------------------------------------
-
-float tempair;    //un float pour stocker la température de l'air
-float humidite;    //un float pour stocker le taux d'humidité
-
-
-
-//------------------------------------------------------------------------------------------------------------------------
-
 
 // Variables nécessaires à la pompe de circulation-------------------------------------------------------------------------
 
