@@ -48,6 +48,7 @@ int n = 1; //nécessaire à lécran...
 
 LiquidCrystal_I2C lcd(I2C_ADDR,En_pin,Rw_pin,Rs_pin,D4_pin,D5_pin,D6_pin,D7_pin); //définition de l'écran
 
+
 //----------------------------------------------------------------------------------------------------------------------
 
 
@@ -131,6 +132,28 @@ long databouton4 []={(bouton[3]),300,0,0,0};
 
 
 
+// variables necessaires à la communication serie---------------------------
+const byte buffSize = 40;
+char inputBuffer[buffSize];
+const char startMarker = '<';
+const char endMarker = '>';
+byte bytesRecvd = 0;
+boolean readInProgress = false;
+boolean newDataFromPC = false;
+
+char messageFromPC[buffSize] = {0};
+int NewData = 0;
+
+unsigned long curMillis;
+
+unsigned long prevReplyToPCmillis = 0;
+unsigned long replyToPCinterval = 1000;
+
+//---------------------------------------------------------------------------
+
+
+
+
 void setup() {
   
   // Définition des pins D6 à D9 (les relais ) comme sortie et éteints au départ
@@ -164,8 +187,8 @@ dht.begin();    // initialisation du capteur DHT22
 
 
   
-        Serial.begin(9600); //initialiser la communication série ( pour déboggage)
-
+  Serial.begin(9600); //initialiser la communication série ( pour déboggage)
+  Serial.println("<Arduino is ready>"); //permet au raspberry de savoir que l'arduino est pret à recevoir les données
 
 }
 
@@ -384,6 +407,15 @@ humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22
  lcd.print("c");
  */
   }
+  
+  // fonction de lecture sur le port série--------------------------------
+  
+  curMillis = millis();
+  getDataFromPC();
+  ChoixRequete ();
+  
+  //-----------------------------------------------------------------------
+  
     
     
     
@@ -531,4 +563,135 @@ void LectureHumidite ()
 {
   humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22 et stockage dans humidite
 }
+
+
+// Début de la fonction de lecture du port série--------------------------
+
+void getDataFromPC() {
+
+    // receive data from PC and save it into inputBuffer
+    
+  if(Serial.available() > 0) {
+
+    char x = Serial.read();
+
+      // the order of these IF clauses is significant
+      
+    if (x == endMarker) {
+      readInProgress = false;
+      newDataFromPC = true;
+      inputBuffer[bytesRecvd] = 0;
+      parseData();
+    }
+    
+    if(readInProgress) {
+      inputBuffer[bytesRecvd] = x;
+      bytesRecvd ++;
+      if (bytesRecvd == buffSize) {
+        bytesRecvd = buffSize - 1;
+      }
+    }
+
+    if (x == startMarker) { 
+      bytesRecvd = 0; 
+      readInProgress = true;
+    }
+  }
+}
+
+
+
+// fin de la fonction de lecture sur le port série-------------------------
+
+
+// début de la fonction permettant de séparer les commandes recues par le raspberry
+
+void parseData() {
+
+    // split the data into its parts
+    
+  char * strtokIndx; // this is used by strtok() as an index
+  
+  strtokIndx = strtok(inputBuffer,",");      // get the first part - the string
+  strcpy(messageFromPC, strtokIndx); // copy it to messageFromPC
+
+  strtokIndx = strtok(NULL, ","); // this continues where the previous call left off
+  NewData = atoi(strtokIndx);     // convert this part to an integer
+  
+  /*
+  
+  strtokIndx = strtok(NULL, ","); 
+  servoFraction = atof(strtokIndx);     // convert this part to a float
+  */
+
+
+
+}
+
+// fin de la foncion de séparation des informations-----------------------
+
+// Début de la fonction de traitement des requetes du raspberry----------
+
+void ChoixRequete() {
+
+   // this illustrates using different inputs to call different functions
+  if (strcmp(messageFromPC, "Hygro") == 0) {
+     LectureHumidite();
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<Humidite : ");
+      Serial.print (humidite);
+      Serial.print (" %>");
+      Serial.println ();
+     }
+  }
+
+  if (strcmp(messageFromPC, "T.air") == 0) {
+     LectureTempAir();
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<Temperature Air: ");
+      Serial.print (tempair);
+      Serial.print (" *C>");
+      Serial.println ();
+     }
+  }
+  
+  if  (strcmp(messageFromPC, "T.eau") == 0) {
+    LectureTempEau ();
+    if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<Temperature Eau: ");
+      Serial.print (tempeau);
+      Serial.print (" *C>");
+      Serial.println ();
+    }
+  }
+  
+  
+  //essai de modifier un paramètre en mémoire dans l'arduino ici le mode de circulation
+   if  (strcmp(messageFromPC, "UMC") == 0) {
+   if (newDataFromPC) {
+     newDataFromPC = false;
+     modecirculation [0] = NewData;
+     Serial.print ("<Nouveau mode de Circulation: ");
+     Serial.print (modecirculation [0]);
+     Serial.println ();
+   }
+ }
+
+
+
+  /*
+  if (strcmp(messageFromPC, "LED2") == 0) {
+     updateLED2();
+  }
+
+  */
+
+  
+}
+
+// fin de la fonction de traitement des requetes-------------------------
+
 
