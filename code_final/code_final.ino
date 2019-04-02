@@ -364,8 +364,12 @@ void loop()
 
 // septième partie : lecture de la temperature de l'air et du taux d'humidité-----------------------------------------------------------------
 
-LectureTempAir ();
-LectureHumidite ();
+
+
+// LectureTempAir ();
+// LectureHumidite ();
+
+
 
 
 /*
@@ -646,15 +650,15 @@ void ChoixRequete() {
      }
   }
 
-  if (strcmp(messageFromPC, "T.air") == 0) {
+  if (strcmp(messageFromPC, "LireTempAir") == 0) {
      LectureTempAir();
-     if (newDataFromPC) {
+  }
+  
+  if (strcmp(messageFromPC, "SendTempAir") == 0) {
+      if (newDataFromPC) {
       newDataFromPC = false;
-      Serial.print ("<Temperature Air: ");
-      Serial.print (tempair);
-      Serial.print (" *C>");
-      Serial.println ();
-     }
+      Serial.print (humidite);
+      }
   }
   
   if  (strcmp(messageFromPC, "T.eau") == 0) {
