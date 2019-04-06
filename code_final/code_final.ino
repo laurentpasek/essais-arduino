@@ -647,17 +647,22 @@ void ChoixRequete() {
       Serial.print (humidite);
       Serial.print (" %>");
       Serial.println ();
-     }
+      }
   }
 
   if (strcmp(messageFromPC, "LireTempAir") == 0) {
      LectureTempAir();
+     if (newDataFromPC) {
+       newDataFromPC = false;
+       }
   }
   
   if (strcmp(messageFromPC, "SendTempAir") == 0) {
       if (newDataFromPC) {
       newDataFromPC = false;
-      Serial.print (humidite);
+      Serial.print ("<");
+      Serial.print (tempair);
+      Serial.print (">");
       }
   }
   
