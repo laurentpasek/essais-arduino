@@ -188,7 +188,7 @@ dht.begin();    // initialisation du capteur DHT22
 
   
   Serial.begin(9600); //initialiser la communication série ( pour déboggage)
-  Serial.println("<Arduino is ready>"); //permet au raspberry de savoir que l'arduino est pret à recevoir les données
+//  Serial.println("<Arduino is ready>"); //permet au raspberry de savoir que l'arduino est pret à recevoir les données
 
 }
 
@@ -639,14 +639,19 @@ void parseData() {
 void ChoixRequete() {
 
    // this illustrates using different inputs to call different functions
-  if (strcmp(messageFromPC, "Hygro") == 0) {
+  if (strcmp(messageFromPC, "lireHygro") == 0) {
      LectureHumidite();
      if (newDataFromPC) {
       newDataFromPC = false;
-      Serial.print ("<Humidite : ");
+      }
+  }
+
+  if (strcmp(messageFromPC, "SendHygro") == 0) {
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<");
       Serial.print (humidite);
-      Serial.print (" %>");
-      Serial.println ();
+      Serial.print (">");
       }
   }
 
