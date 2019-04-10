@@ -671,18 +671,23 @@ void ChoixRequete() {
       }
   }
   
-  if  (strcmp(messageFromPC, "T.eau") == 0) {
+  if  (strcmp(messageFromPC, "LireTempEau") == 0) {
     LectureTempEau ();
     if (newDataFromPC) {
       newDataFromPC = false;
-      Serial.print ("<Temperature Eau: ");
-      Serial.print (tempeau);
-      Serial.print (" *C>");
-      Serial.println ();
     }
   }
   
+    if  (strcmp(messageFromPC, "SendTempEau") == 0) {
+    if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<");
+      Serial.print (tempeau);
+      Serial.print (">");
+    }
+  }
   
+    
   //essai de modifier un paramètre en mémoire dans l'arduino ici le mode de circulation
    if  (strcmp(messageFromPC, "UMC") == 0) {
    if (newDataFromPC) {
