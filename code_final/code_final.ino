@@ -89,7 +89,8 @@ byte tempeauencours = 1;    //une variable pour savoir si une mesure de la tempe
 
 // On crée un tableau contenant : { le temps allumé, le temps éteint, le moment du dernier changement, l'état (allumé ou éteint) }
 // et qui sera utilisé par la fonction "clignotement"
-long circulation [] = {1000,3000,0,0};  
+// long circulation [] = {1000,3000,0,0};
+long circulation [] = {10000,0,0,0};
 
 //      int etatcirculation = 1;      //une variable pour stocker l'état dans lequel doit etre le relais
     int modecirculation [2]= {0,0};  //variable pour stocker le mode de fonctionnement de la pompe de circulation (-1=off ; 0=auto ; 1=on )en premier et le mode précédent ensuite
@@ -100,7 +101,8 @@ long circulation [] = {1000,3000,0,0};
 
 // On crée un tableau contenant : { le temps allumé, le temps éteint, le moment du dernier changement, l'état (allumé ou éteint) }
 // et qui sera utilisé par la fonction "clignotement"
-long air [] = {1000,3000,0,0};  
+//long air [] = {1000,3000,0,0};
+long air [] = {10000,0,0,0};
 
 int modeair [2]= {0,0};  //variable pour stocker le mode de fonctionnement de la pompe à air (-1=off ; 0=auto ; 1=on )en premier et le mode précédent ensuite
 
