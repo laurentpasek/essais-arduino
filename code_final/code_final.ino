@@ -4,6 +4,11 @@
 #include <OneWire.h>    //du bus 1-wire
 #include "DHT.h"   // Librairie des capteurs DHT
 #include <Adafruit_Sensor.h>  // la librairie adafruit sensor est nécessaire à la librairie DHT.h
+#include "SparkFunBME280.h"   //la librairie permettant l'utilisation BME280.
+#include <SPI.h>  // Cette librairie est nécessaire au fonctionnement de la librairie SparkfunBME280.
+#include <Adafruit_TSL2561_U.h>  // La librairie nécessaire au capteur de luminosité
+
+
 
 
 //définition du bus 1-wire---------------------------------------------------
@@ -90,7 +95,7 @@ byte tempeauencours = 1;    //une variable pour savoir si une mesure de la tempe
 // On crée un tableau contenant : { le temps allumé, le temps éteint, le moment du dernier changement, l'état (allumé ou éteint) }
 // et qui sera utilisé par la fonction "clignotement"
 // long circulation [] = {1000,3000,0,0};
-long circulation [] = {10000,0,0,0};
+long circulation [] = {4294967290,0,0,0};
 
 //      int etatcirculation = 1;      //une variable pour stocker l'état dans lequel doit etre le relais
     int modecirculation [2]= {0,0};  //variable pour stocker le mode de fonctionnement de la pompe de circulation (-1=off ; 0=auto ; 1=on )en premier et le mode précédent ensuite
@@ -102,7 +107,7 @@ long circulation [] = {10000,0,0,0};
 // On crée un tableau contenant : { le temps allumé, le temps éteint, le moment du dernier changement, l'état (allumé ou éteint) }
 // et qui sera utilisé par la fonction "clignotement"
 //long air [] = {1000,3000,0,0};
-long air [] = {10000,0,0,0};
+long air [] = {4294967290,0,0,0};
 
 int modeair [2]= {0,0};  //variable pour stocker le mode de fonctionnement de la pompe à air (-1=off ; 0=auto ; 1=on )en premier et le mode précédent ensuite
 
@@ -153,6 +158,23 @@ unsigned long replyToPCinterval = 1000;
 
 //---------------------------------------------------------------------------
 
+// Définition du capteur de pression BME280
+BME280 CapteurPression; //Uses I2C address 0x76 (jumper closed). On pourra aussi l'appeler CapteurPression
+float Pression; //Une variable pour stocker la pression atmospherique.
+float TempElec; //Une variable pour stocker la température dans le boitier electronique.
+
+//------------------------------------------------------------------------------------------
+
+
+// Définition du capteur TSL2561 ( Luxmètre )
+
+Adafruit_TSL2561_Unified tsl = Adafruit_TSL2561_Unified(TSL2561_ADDR_FLOAT, 12345);
+// ADDR_FLOAT définit l'adresse du capteur à 0x39 soit le pin d'adresse sur le capteur
+//n'est pas connecté
+float Luminosite; //Une variable pour stocker la valeur lue par le capteur
+
+//-------------------------------------------------------------------------------
+
 
 
 
@@ -192,7 +214,26 @@ dht.begin();    // initialisation du capteur DHT22
   Serial.begin(9600); //initialiser la communication série ( pour déboggage)
 //  Serial.println("<Arduino is ready>"); //permet au raspberry de savoir que l'arduino est pret à recevoir les données
 
+// Initialisation du capteur de pression BME280
+CapteurPression.setI2CAddress(0x76); //Le capteur a pour adresse 0x76.
+CapteurPression.beginI2C();  //Démarrage du capteur.
+//-----------------------------------------------------------------------------------
+
+//Initialisation du capteur de luminosité TSL2561
+tsl.begin();
+
+//sensor_t sensor;
+//tsl.getSensor(&sensor);
+
+tsl.enableAutoRange(true); // Choisit seul le gain du capteur selon la luminosité pour éviter la saturation
+tsl.setIntegrationTime(TSL2561_INTEGRATIONTIME_101MS);  /* Résolution moyenne pour une vitesse acceptable */
+
+//------------------------------------------------
+
+
 }
+
+
 
 void loop()
 {
@@ -396,7 +437,7 @@ humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22
      lcd.print (" ");    //on laisse un espace
      lcd.print (tempair, 1);    //on affiche la température de l'air avec un seul chiffre derrière la virgule
      lcd.print ((char)223); //le signe °
-     lcd.print (" ");    //on laisse un espace
+     lcd.print (" ");    //on {laisse un espace
      lcd.print (humidite, 1);    //on affiche la l'humidité de l'air avec un seul chiffre derrière la virgule
      //lcd.print ((char)37); //le signe %
      */
@@ -407,7 +448,7 @@ humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22
  lcd.home ();    //on se met sur le premier caractère de la première ligne
  lcd.print ("temperature");    //on affiche le texte : temperature
  lcd.setCursor (2,1);    //on se met au troisième caractère sur la seconde ligne
- lcd.print (tempeau, 1);    //on affiche la température avec un seul chiffre derrière la virgule
+ lcd.print (tempeau, 1=c);    //on affiche la température avec un seul chiffre derrière la virgule
  lcd.print ((char)223); //le signe °
  //lcd.print ((char)99); // le symbole c sur la table de caractères
  lcd.print("c");
@@ -570,6 +611,45 @@ void LectureHumidite ()
   humidite = dht.readHumidity();    //lecture du taux d'humidité sur la DHT22 et stockage dans humidite
 }
 
+// fin de la fonction de lecture de l'hygrométrie
+
+
+// Début de la fonction de lecture de la pression atmosphérique
+
+void LecturePression ()
+{
+  Pression = CapteurPression.readFloatPressure()/100, 2;
+}
+
+// fin de la fonction de lecture de la pression atmosphérique.
+
+// début de la fonction de lecture de la température du boitier électronique
+
+void LectureTempElec ()
+{
+  TempElec = CapteurPression.readTempC(), 2;
+}
+
+// fin de la fonction de lecture de la température dans le boitier electronique
+
+//Début de la fonction de lecture de la luminosité
+
+void LectureLuminosite ()
+{
+  //On crée un nouvel évènement sur le capteur
+  sensors_event_t event;
+  tsl.getEvent(&event);
+  
+  //Puis on prends la mesure et on l'enregistre
+  if (event.light)
+  {
+    Luminosite = (event.light);
+  }
+}
+
+// fin de la fonction de lecture de la luminosite
+
+
 
 // Début de la fonction de lecture du port série--------------------------
 
@@ -641,7 +721,7 @@ void parseData() {
 void ChoixRequete() {
 
    // this illustrates using different inputs to call different functions
-  if (strcmp(messageFromPC, "lireHygro") == 0) {
+  if (strcmp(messageFromPC, "LireHygro") == 0) {
      LectureHumidite();
      if (newDataFromPC) {
       newDataFromPC = false;
@@ -688,6 +768,58 @@ void ChoixRequete() {
       Serial.print (">");
     }
   }
+  
+  
+    if (strcmp(messageFromPC, "LirePression") == 0) {
+     LecturePression();
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      }
+  }
+
+  if (strcmp(messageFromPC, "SendPression") == 0) {
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<");
+      Serial.print (Pression);
+      Serial.print (">");
+      }
+  }
+  
+  
+  if (strcmp(messageFromPC, "LireTempElec") == 0) {
+     LectureTempElec();
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      }
+  }
+
+  if (strcmp(messageFromPC, "SendTempElec") == 0) {
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<");
+      Serial.print (TempElec);
+      Serial.print (">");
+      }
+  }
+  
+  if (strcmp(messageFromPC, "LireLuminosite") == 0) {
+     LectureLuminosite();
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      }
+  }
+
+  if (strcmp(messageFromPC, "SendLuminosite") == 0) {
+     if (newDataFromPC) {
+      newDataFromPC = false;
+      Serial.print ("<");
+      Serial.print (Luminosite);
+      Serial.print (">");
+      }
+  }
+
+  
   
     
   //essai de modifier un paramètre en mémoire dans l'arduino ici le mode de circulation
